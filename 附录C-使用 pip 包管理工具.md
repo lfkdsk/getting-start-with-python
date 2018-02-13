@@ -28,7 +28,9 @@
 pip install -r requirement.txt
 ```
 
-关于 `pip` 的使用更多的内容我们可以在官方文档中找到 [PyPi](https://pip.pypa.io/en/stable/)。
+
+
+>  关于 `pip` 的使用更多的内容我们可以在官方文档中找到 [PyPi](https://pip.pypa.io/en/stable/)。
 
 
 
