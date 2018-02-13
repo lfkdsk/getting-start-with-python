@@ -16,6 +16,18 @@
 
 ![m3-PIL](appendix/pip-m3-pil.png)
 
+另外我们的一个项目会有很多的依赖的第三方的项目，这时候为了搜集方便我们会把这些依赖写在 `requirement.txt` 类似这样：
+
+![requirement](appendix/requirement.png)
+
+项目名 + `==` + 版本号的格式逐行的添加依赖。
+
+然后我们使用 `-r` 命令去安装定义在依赖文件的全部依赖：
+
+``` shell
+pip install -r requirement.txt
+```
+
 关于 `pip` 的使用更多的内容我们可以在官方文档中找到 [PyPi](https://pip.pypa.io/en/stable/)。
 
 
