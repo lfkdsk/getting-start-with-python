@@ -1,7 +1,5 @@
 # AI Game FightTheater
 
-![show](project-game/show.gif)
-
 
 
 ## 获取实例代码
@@ -27,7 +25,7 @@ python game
 ```
 
 
-![show](project-game/show.gif)
+![show](project-game/pic.gif)
 
 
 
