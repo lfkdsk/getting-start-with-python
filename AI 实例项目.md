@@ -209,9 +209,21 @@ game_screen.fill(<color>)
 
 ![fill](project-game/fill.png)
 
-`fill` 这个参数也可以提供多个参数
+`fill` 这个参数也可以提供多个参数，这里我们只提供 Color 这个参数去进行绘制，这里我们在 Pygame 中定义一个 Color 直接使用一个元组就好了，三个数目的元组代表一个 RGB 的颜色，四个数目的元组代表一个 ARGB 的颜色。这里我们设定一个颜色：
+
+``` python
+background_color = (30, 100, 30)
+# ...
+game_screen.fill(background_color)
+```
+
+![green_screen](project-game/green-screen.png)
 
 
+
+
+
+## 使用设置类进行管理
 
 
 
