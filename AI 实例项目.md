@@ -142,7 +142,7 @@ https://github.com/lfkdsk/FighterTheater/tree/master/img
 
 ## 开启游戏项目
 
-首先，在开启这个项目的时候，我们先创建一个空的 Pygame 窗口。在使用 Pygame 的基础结构之中，我们把启动项目的文件设计成标准的 Python 脚本的启动文件：
+在使用 Pygame 的基础结构之中，我们把启动项目的文件设计成标准的 Python 脚本的启动文件：
 
 ``` python
 def game_looper():
@@ -153,7 +153,26 @@ if __name__ == '__main__':
   game_looper()
 ```
 
+我们在脚本之中经常会见到这样的结构，我们不写出在模块之中直接编写逻辑，而是抽出脚本的主程序然后进行一个判断。这个判断 `if __name__ == '__main__'` 可能对很多人产生困惑，在 Python 之中这种带有两侧双下划线的方法被称作 Python 的 magical method ，这个 `__name__` 代表了当前的模块的名称，而当这个属性是 `'__main__'` 的时候代表这个模块是作为启动程序来启动，这时候我们才运行游戏的主循环。
 
+解决了这个部分的逻辑结构，我们先来创建一个空的 Pygame 窗口，创建 Pygame 窗口的基础结构是这个样子的：
+
+``` python
+import pygame
+import sys
+
+def game_looper():
+    pygame.init()
+    game_screen = pygame.display.set_mode((960， 640))
+    while True:
+        # 处理事件逻辑
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
+        pygame.display.update()
+```
+
+这里我们给处理一个非常基础的创建 Pygame 窗口的模板代码，首先我们使用 `pygame.init()` 来初始化 Pygame 的设置。在 L6 我们使用 `pygame.display.set_mode(tuple)` 来创建一个
 
 
 
