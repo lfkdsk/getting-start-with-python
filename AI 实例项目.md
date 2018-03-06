@@ -172,7 +172,24 @@ def game_looper():
         pygame.display.update()
 ```
 
-这里我们给处理一个非常基础的创建 Pygame 窗口的模板代码，首先我们使用 `pygame.init()` 来初始化 Pygame 的设置。在 L6 我们使用 `pygame.display.set_mode(tuple)` 来创建一个
+这里我们给处理一个非常基础的创建 Pygame 窗口的模板代码，首先我们使用 `pygame.init()` 来初始化 Pygame 的设置。在 L6 我们使用 `pygame.display.set_mode(tuple)` 来创建一个窗口：
+
+![set-mode](project-game/set-mode.png)
+
+`set_mode` 的基础参数接受一个元组设定了这个 Pygame 窗口的长宽值这里我们创建了一个 `(960, 640)` 窗口。之后我们开启了一个无限循环渲染的游戏窗口，这里我们也可以不直接使用 `True` 这样的方式来开启循环，我们也可以使用一个 Flag 来跳出 `while` 循环。
+
+在 L9 开始我们使用 `for-in` 循环处理所有的 `pygame.event.get()` 到的事件，这个事件包含鼠标的点击、键盘的点按等等。这里我们只是处理 `pygame.QUIT` 这种情况，就是我们点击窗口按钮的关闭的时候关闭这个程序。在 L12 我们调用 
+
+``` python
+pygame.display.update()
+```
+
+来刷新屏幕的界面，当我们 update 之后才让我们在界面绘制之后成功的更新到界面上面：
+![update](project-game/update.png)
+
+
+
+
 
 
 
