@@ -163,7 +163,7 @@ import sys
 
 def game_looper():
     pygame.init()
-    game_screen = pygame.display.set_mode((960， 640))
+    game_screen = pygame.display.set_mode((960, 640))
     while True:
         # 处理事件逻辑
         for event in pygame.event.get():
@@ -187,9 +187,29 @@ pygame.display.update()
 来刷新屏幕的界面，当我们 update 之后才让我们在界面绘制之后成功的更新到界面上面：
 ![update](project-game/update.png)
 
+这里我们看到 `update` 这个方法除了使用 None 作为默认参数之外，我们还可以使用一个 `rectangle` 作为参数，只更新屏幕其中的一个区域，这里我们有一个专有名词的叫 `dirty rectangle` ，仅仅刷新这个位置的图形位置。当然如果我们仅仅是要刷新整个屏幕，我们也可以使用另一个方法：
 
+``` python
+ pygame.display.flip()
+```
 
+![flip](project-game/flip.png)
 
+这里可以看到这个方法的描述就是更新整个显示界面渲染到屏幕上面。
+
+我们在这里使用 `python + 文件名` 的命令行运行的时候，就会看到如下的界面：
+
+![empty-win](project-game/empty-win.png)
+
+但是一个空空的、黑黑的窗口未免单调，我们可以试着为窗口设置一个背景颜色，这个我们可以使用 `fill` api 喷涂我们窗口的背景的颜色：
+
+``` python
+game_screen.fill(<color>)
+```
+
+![fill](project-game/fill.png)
+
+`fill` 这个参数也可以提供多个参数
 
 
 
