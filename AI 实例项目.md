@@ -1,4 +1,4 @@
-# AI Game FightTheater
+#    AI Game FightTheater
 
 
 
@@ -141,4 +141,25 @@ https://github.com/lfkdsk/FighterTheater/tree/master/img
 
 
 ## 开启游戏项目
+
+首先，在开启这个项目的时候，我们先创建一个空的 Pygame 窗口。在使用 Pygame 的基础结构之中，我们把启动项目的文件设计成标准的 Python 脚本的启动文件：
+
+``` python
+def game_looper():
+  # ...
+  pass
+
+if __name__ == '__main__':
+  game_looper()
+```
+
+
+
+
+
+
+
+
+
+
 
