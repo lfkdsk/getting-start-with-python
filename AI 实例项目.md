@@ -1,4 +1,4 @@
-#    AI Game FightTheater
+# AI Game FightTheater
 
 
 
@@ -225,9 +225,144 @@ game_screen.fill(background_color)
 
 ## 使用设置类进行管理
 
+在创建整个游戏的过程之中，我们就会接触到很多对游戏进行配置的静态数据，比如我们刚才在 `创建窗口` 这一章这样简单的内容，我们就接触到了两种项目自定义的静态数据：
+
+1. 屏幕的长宽的像素值的人：960、640
+2. 屏幕的背景颜色：(30, 100, 30)
+
+这还只是我们刚刚的开始开发这个程序所使用到的静态数据，那在我们之后对这个程序的开发之中我们必然会看到更多的常量数据，那我们就有必要使用一个设置类（Settings.py）来管理这些数据。比如我们可以看到最后我们在完成整个游戏之中会用到的设置数据就有很多：
+
+::: collapse 所有的设置内容
+
+``` python
+import os
+
+
+class Settings(object):
+
+    def __init__(self):
+        """initialize the settings of game."""
+
+        # screen settings
+        self.SCREEN_WIDTH = 960
+        self.SCREEN_HEIGHT = 640
+        self.SCREEN_SIZE = (self.SCREEN_WIDTH, self.SCREEN_HEIGHT)
+        self.BG_COLOR = (100, 100, 100)
+        self.BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        self.MAP_DIR = os.path.join(self.BASE_DIR, "img/game.tmx")
+        self.MAX_HEALTH = 25
+        self.HEALTH_COLOR = (255, 0, 0)
+        self.HEALTH_COVER_COLOR = (0, 255, 0)
+        self.LEFT_HOME_LOCATION = (65, self.SCREEN_HEIGHT / 2)
+        self.RIGHT_HOME_LOCATION = (self.SCREEN_WIDTH - 65, self.SCREEN_HEIGHT / 2)
+        self.DEFAULT_HERO_NUM = 10
+        self.DEFAULT_STORE_NUM = 10
+        self.DEFAULT_SCORE = 5
+        self.DEFAULT_SEARCH_RANGE = 100.0
+        self.DROP_RANGE = 30.0
+        self.MAX_ENTITIES = 20
+        self.left_score = 0
+        self.right_score = 0
+
+
+game_settings = Settings()
+```
+
+:::
+
+但是，暂时我们还没有用到这么多的数据，那这里我们就先创建我们所需要的数据条目：
+
+``` python
+class Settings(object):
+
+    def __init__(self):
+        """initialize the settings of game."""
+        # screen settings
+        self.SCREEN_WIDTH = 960
+        self.SCREEN_HEIGHT = 640
+        self.SCREEN_SIZE = (self.SCREEN_WIDTH, self.SCREEN_HEIGHT)
+        self.BG_COLOR = (100, 100, 100)
+```
+
+我们再在游戏之中使用这些定义的信息的时候，就可以使用 settings 进行导入，而不是把我们的配置信息零散的放在代码的各处：
+
+``` python
+def game_loop():
+    game_exit = False
+
+    pygame.init()
+    pygame.display.set_caption('Python Game')
+    game_screen = pygame.display.set_mode(
+        game_settings.SCREEN_SIZE,
+    )
+
+    while not game_exit:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                game_exit = True
+        game_screen.fill(game_settings.BG_COLOR)
+        pygame.display.update()
+```
+
+这样我们以后在添加其他的游戏的配置信息的时候，也要记得先来 Settings 对数据进行配置，之后再 import settings 来复用这些配置数据。
 
 
 
+## 使用瓦片地图
+
+> 如果对自制瓦片地图不感兴趣，本节可以跳过，
+>
+> 直接使用示例程序中包含的已经编辑好的瓦片地图文件就可以了。
+>
+> img 之中的 [background_x2.tsx](https://github.com/lfkdsk/FighterTheater/blob/master/img/background_x2.tsx) 是 sprite img 的配置文件
+>
+> img 之中的 [game.tmx](https://github.com/lfkdsk/FighterTheater/blob/master/img/game.tmx) 是整个瓦片地图的配置文件
+
+我们在之前的一节之中已经向大家演示了如何创建一个 Pygame 窗口，并且使用一种颜色去渲染到整个屏幕上面。但是我们的游戏只有一个单一的纯色背景未免单调，我们通常的 2D 游戏多半都是有一个具体的场景的，那我们自制游戏如何来解决问题呢？我们可以使用瓦片地图 Tiled Map 来解决这个问题，瓦片地图 —— 顾名思义，整张地图是由多个小图片（瓦片）来组成的，这也就是意味着我们可以通过一些很少的素材图片，通过各种排列组合来创建很复杂的地形。
+
+> Tips 瓦片地图
+>
+> 当然瓦片地图的功能不止于此，瓦片地图包含创建对象，创建地形等多种复杂功能，这里面我们就仅仅使用了瓦片地图来制作游戏场景的简单功能而已。另外我们生活中常见的地图导航应用就是瓦片地图的一种应用场景。
+
+这里我们给出这个游戏的配套素材，[地址](https://github.com/lfkdsk/FighterTheater/blob/master/img/background_x2.png) （当然也包含在给出的 img 包里）：
+
+![background](project-game/background.png)
+
+大家可以看到为什么说是游戏素材，我们能在游戏中所使用的图块素材都被放在一张图片上面，我们通常把这种图片称作 “雪碧图”（Sprite Image），这样我们再导入游戏资源的时候就可以只加载这一张图片，使用具体图块的时候只要按照图中的位置取出来就好了。
+
+之后我们就可以导入资源文件到编辑器了，这里我们使用的编辑器是 [Tiled Map Editor](http://www.mapeditor.org/) ，点击链接进行下载安装就可以了，之后我们打开编辑器，按照我们刚才设定的分辨率创建一个空地图：
+
+![create-new-map](project-game/create-new-map.png)
+
+这里我们的块大小选择 **32px** 地图大小设定为宽 30 块、高 20 块，这样地图的总大小就是正好的 `960 * 640 ` 像素的。
+
+刚刚创建好的空地图是这个样子的：
+
+![empty-map](project-game/empty-map.png)
+
+这时候我们使用上面 “创建新图块” 菜单引入我们的资源文件：
+
+![new-map](project-game/new-map.png)
+
+这里我们要选择相同的块宽度对图片进行分割，导入之后的资源文件如下图所示：
+
+![new-resource](project-game/new-resource.png)
+
+可以看到这张图片已经被按照 `32*32` 拆分成一个一个的图块了，这时候在地图的窗口之后我们就可以点击图块，然后再点击地图来拼出地图的样式：
+
+![select-map](project-game/select-map.png)
+
+我们可以选择单个图块，也可以选择一个区域的图块，这里我们选择的就是一个区域的图块。
+
+![full-map](project-game/full-map.png)
+
+最后我制作了一个比较简单的游戏背景图片，包括外围的围墙，两侧的神社，装饰用的天井，和为了自然做出的城墙裂痕，如果大家感兴趣可以按照上面的方法自己定制出自己的瓦片地图。
+
+> Tips 瓦片地图的使用
+>
+> 这里面我们对瓦片地图的使用和定制都是比较简单的，瓦片地图有很多的复杂的应用，这些内容可以从文档中获取和学习：
+>
+> [Tiled Map Editor Document](http://doc.mapeditor.org/en/latest/)
 
 
 
