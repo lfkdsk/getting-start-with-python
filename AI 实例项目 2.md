@@ -238,3 +238,339 @@ def random_create(world):
 ```
 
 :::
+
+
+
+## 完善辅助方法
+
+在让我们的游戏设计 AI 之前要完善游戏各个部分的属性和方法以便于我们创建的自动机 AI 能够对他们进行调用和处理，首先我们来实现 Entity 基类的方法实现：
+
+``` python
+class Entity(object):
+    def __init__(self, world, name, image):
+        self.id = 0
+        self.name = name
+        self.world = world
+        self.image = image
+        self.location = Vector2(game_settings.SCREEN_WIDTH / 2, game_settings.SCREEN_HEIGHT / 2)
+        self.destination = Vector2(0, 0)
+        self.speed = 0.0
+        # self.brain = StateMachine()
+        self.size = self.image.get_size()
+
+    def render(self, surface):
+        x, y = self.location
+        w, h = self.size
+        surface.blit(
+            self.image,
+            (x - w / 2, y - h / 2),
+        )
+
+    def process(self, time_passed):
+        # self.brain.think()
+        if self.speed > 0.0 and self.location != self.destination:
+            vec_to_destination = self.destination - self.location
+            distance_to_destination = vec_to_destination.get_length()
+            heading = vec_to_destination.get_normalized()
+            travel_distance = min(distance_to_destination, time_passed * self.speed)
+            self.location += travel_distance * heading
+
+```
+
+这里我们为 Entity 的基类添加了 `speed` 速度，`destination` 目的，还有一个 `process` 的函数，其中主要进行的逻辑就是如果对象有速度，并且没有到达目的地的时候就通过三角函数计算位置，并且推进对象的当前位置。从这个方法的功能我们能看出来这个方法被调用之后对象就会改变位置。
+
+接着我们定义 Hero 的其余 render 函数实现：
+
+``` python
+    def render(self, surface):
+        if self.health > 0:
+            self._draw_health_number(surface)
+
+        Entity.render(self, surface)
+
+        if not self.carry_energy_store:
+            return
+
+        self._draw_if_carry_energy(surface)
+```
+
+我们根据 Hero 的 health 生命值在 Hero 对象的头上绘制出一个生命值的 “血条”，之后如果我们的 Hero 携带了一个 Energy Stone ，就把那个能量石通过 `_draw_if_carry_energy` 绘制在 Hero 的身上。
+
+我们还要为 World 方法添加一些辅助的方法，首先是 World 之中也要有对能量石的管理，我们给 World 添加一套和对 Hero 管理相同的方法：
+
+``` python
+    def get_energy_store(self, energy_id):
+        if energy_id in self.energy_stores.keys():
+            return self.energy_stores[energy_id]
+
+        return None
+
+    def add_energy_store(self, store):
+        self.energy_stores[self.entity_id] = store
+        store.id = self.entity_id
+        self.entity_id += 1
+
+    def remove_energy_store(self, store):
+        if store in self.energy_stores.values():
+            del self.energy_stores[store.id]
+```
+
+还有连个辅助方法用来计算距离某个位置最近的 Hero 或者是 EnergyStone ：
+
+``` python
+    def get_close_entity(self, name, location, search_range=100.0):
+        location = Vector2(*location)
+        for entity in self.entities.values():
+            if entity.name == name:
+                distance = location.get_distance_to(entity.location)
+                if distance < search_range:
+                    return entity
+
+        return None
+
+    def get_close_energy(self, location, search_range=100.0):
+        location = Vector2(*location)
+        for entity in self.energy_stores.values():
+            distance = location.get_distance_to(entity.location)
+            if distance < search_range:
+                return entity
+
+        return None
+```
+
+这我们根据 location 位置，对里面的 Heroes 或者是 EnergyStones 进行遍历如果有小于 Range 距离的，返回对应的搜索结果。
+
+::: collapse world.py
+
+``` python
+from gameobjects.vector2 import Vector2
+from pygame.surface import Surface
+from pytmx.util_pygame import load_pygame
+
+from game_funcs import draw_background_with_tiled_map
+from settings import game_settings
+
+
+class World(object):
+    def __init__(self, screen):
+        self.entities = {}
+        self.entity_id = 0
+        self.energy_stores = {}
+        self.game_map = load_pygame(game_settings.MAP_DIR)
+        self.hero_nums = {"green": 0, "red": 0}
+        self.background_layer = Surface(game_settings.SCREEN_SIZE).convert_alpha()
+        self.player_layer = Surface(game_settings.SCREEN_SIZE).convert_alpha()
+        self.player_layer.fill((0, 0, 0, 0))
+        # initial double-side heroes
+        draw_background_with_tiled_map(self.background_layer, self.game_map)
+        screen.blit(self.background_layer, game_settings.SCREEN_SIZE)
+
+    def add_entity(self, entity):
+        self.entities[self.entity_id] = entity
+        entity.id = self.entity_id
+        self.entity_id += 1
+        self.hero_nums[entity.hero_type] += 1
+
+    def remove_entity(self, entity):
+        self.hero_nums[entity.hero_type] -= 1
+        del self.entities[entity.id]
+
+    def get(self, entity_id):
+        if entity_id in self.entities:
+            return self.entities[entity_id]
+
+        return None
+
+    def process(self, time_passed):
+        time_passed_seconds = time_passed / 1000.0
+        for entity in self.entities.values():
+            entity.process(time_passed_seconds)
+
+    def render(self, surface):
+        surface.fill((255, 255, 255))
+        self.player_layer.fill((0, 0, 0, 0))
+
+        # render entities
+        for entity in self.energy_stores.values():
+            entity.render(self.player_layer)
+
+        for entity in self.entities.values():
+            entity.render(self.player_layer)
+
+        render_score_message(self.player_layer)
+        surface.blit(self.background_layer, (0, 0))
+        surface.blit(self.player_layer, (0, 0))
+
+    def get_close_entity(self, name, location, search_range=100.0):
+        location = Vector2(*location)
+        for entity in self.entities.values():
+            if entity.name == name:
+                distance = location.get_distance_to(entity.location)
+                if distance < search_range:
+                    return entity
+
+        return None
+
+    def get_close_energy(self, location, search_range=100.0):
+        location = Vector2(*location)
+        for entity in self.energy_stores.values():
+            distance = location.get_distance_to(entity.location)
+            if distance < search_range:
+                return entity
+
+        return None
+
+    def get_energy_store(self, energy_id):
+        if energy_id in self.energy_stores.keys():
+            return self.energy_stores[energy_id]
+
+        return None
+
+    def add_energy_store(self, store):
+        self.energy_stores[self.entity_id] = store
+        store.id = self.entity_id
+        self.entity_id += 1
+
+    def remove_energy_store(self, store):
+        if store in self.energy_stores.values():
+            del self.energy_stores[store.id]
+
+    def min_hero_type(self):
+        if self.hero_nums['red'] < self.hero_nums['green']:
+            return 'red'
+
+        return 'green'
+```
+
+:::
+
+::: collapse entities.py
+
+``` python
+from game_funcs import display_message
+from states import *
+
+
+class Entity(object):
+    def __init__(self, world, name, image):
+        self.id = 0
+        self.name = name
+        self.world = world
+        self.image = image
+        self.location = Vector2(game_settings.SCREEN_WIDTH / 2, game_settings.SCREEN_HEIGHT / 2)
+        self.destination = Vector2(0, 0)
+        self.speed = 0.0
+        # self.brain = StateMachine()
+        self.size = self.image.get_size()
+
+    def render(self, surface):
+        x, y = self.location
+        w, h = self.size
+        surface.blit(
+            self.image,
+            (x - w / 2, y - h / 2),
+        )
+
+    def process(self, time_passed):
+        # self.brain.think()
+        if self.speed > 0.0 and self.location != self.destination:
+            vec_to_destination = self.destination - self.location
+            distance_to_destination = vec_to_destination.get_length()
+            heading = vec_to_destination.get_normalized()
+            travel_distance = min(distance_to_destination, time_passed * self.speed)
+            self.location += travel_distance * heading
+
+
+class EnergyStore(Entity):
+    def __init__(self, world, image, energy_type):
+        super(EnergyStore, self).__init__(world, "energy", image)
+        self.energy_type = energy_type
+
+
+class Hero(Entity):
+    def __init__(self, world, image, dead_image, hero_type):
+        super(Hero, self).__init__(world, "hero", image)
+        self.dead_image = dead_image
+        self.health = 25
+        self.carry_energy_store = None
+        self.hero_type = hero_type
+
+    def carry(self, image):
+        self.carry_energy_store = image
+
+    def drop(self, surface):
+        if not self.carry_energy_store:
+            return
+
+        self._draw_if_carry_energy(surface)
+        self.carry_energy_store = None
+
+    def bitten(self):
+        self.health -= 2
+        self.speed = 140.
+
+        if self.health <= 0:
+            self.speed = 0.
+            self.image = self.dead_image
+
+    def dead(self):
+        x, y = self.location
+        w, h = self.image.get_size()
+        background = self.world.background_layer
+        background.blit(
+            self.dead_image,
+            (x - w, y - h / 2),
+        )
+
+    def get_enemy_type(self):
+        return 'red-hero' if self.hero_type == 'green' else 'green-hero'
+
+    def in_center(self):
+        return game_settings.RIGHT_HOME_LOCATION[0] > self.location.x > game_settings.LEFT_HOME_LOCATION[0]
+
+    def get_home_location(self):
+        if self.hero_type == 'green':
+            return game_settings.LEFT_HOME_LOCATION
+
+        return game_settings.RIGHT_HOME_LOCATION
+
+    def add_energy_score(self):
+        if self.hero_type == 'green':
+            game_settings.left_score += game_settings.DEFAULT_SCORE
+        else:
+            game_settings.right_score += game_settings.DEFAULT_SCORE
+
+    def render(self, surface):
+        if self.health > 0:
+            self._draw_health_number(surface)
+
+        self._draw_state_machine(surface)
+        Entity.render(self, surface)
+
+        if not self.carry_energy_store:
+            return
+
+        self._draw_if_carry_energy(surface)
+
+    def _draw_if_carry_energy(self, surface):
+        x, y = self.location
+        w, h = self.carry_energy_store.get_size()
+        surface.blit(self.carry_energy_store, (x - w, y - h / 2))
+
+    def _draw_health_number(self, surface):
+        x, y = self.location
+        w, h = self.image.get_size()
+        bar_x, bar_y = x - w / 2, y - h / 2 - 6
+
+        surface.fill(
+            game_settings.HEALTH_COLOR,
+            (bar_x, bar_y, game_settings.MAX_HEALTH, 4),
+        )
+        surface.fill(
+            game_settings.HEALTH_COVER_COLOR,
+            (bar_x, bar_y, self.health, 4),
+        )
+```
+
+:::
+
