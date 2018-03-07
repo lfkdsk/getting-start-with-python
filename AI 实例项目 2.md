@@ -113,5 +113,128 @@ def random_create(world):
         pygame.display.update()
 ```
 
+运行的结果：
+
+![random-hero](project-game/random-heroes.png)
+
+可以看到 Hero 对象那个随机的出现在屏幕的各个位置。
+
+::: collapse starter.py
+
+``` python
+import pygame
+
+from game.game_funcs import random_create
+from settings import game_settings
+from world import World
 
 
+def game_loop():
+    game_exit = False
+
+    pygame.init()
+    pygame.display.set_caption('Python Game')
+    game_screen = pygame.display.set_mode(
+        (game_settings.SCREEN_WIDTH, game_settings.SCREEN_HEIGHT),
+    )
+    game_world = World(game_screen)
+    random_create(game_world)
+
+    while not game_exit:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                game_exit = True
+        game_world.render(game_screen)
+
+        pygame.display.update()
+
+```
+
+:::
+
+::: collapse world.py
+
+``` python
+class World(object):
+    def __init__(self, screen):
+        self.entities = {}
+        self.entity_id = 0
+        self.game_map = load_pygame(game_settings.MAP_DIR)
+        self.background_layer = Surface(game_settings.SCREEN_SIZE).convert_alpha()
+        self.player_layer = Surface(game_settings.SCREEN_SIZE).convert_alpha()
+        self.player_layer.fill((0, 0, 0, 0))
+        # initial double-side heroes
+        draw_background_with_tiled_map(self.background_layer, self.game_map)
+        screen.blit(self.background_layer, game_settings.SCREEN_SIZE)
+        
+    def add_entity(self, entity):
+        self.entities[self.entity_id] = entity
+        entity.id = self.entity_id
+        self.entity_id += 1
+
+    def remove_entity(self, entity):
+        del self.entities[entity.id]
+
+    def render(self, surface):
+        self.player_layer.fill((0, 0, 0, 0))
+
+        for entity in self.entities.values():
+            entity.render(self.player_layer)
+
+        surface.blit(self.background_layer, (0, 0))
+        surface.blit(self.player_layer, (0, 0))
+        
+```
+
+:::
+
+::: collapse game_funcs.py
+
+``` python
+import os
+from random import randint
+
+import datetime
+import pygame
+from gameobjects.vector2 import Vector2
+
+from settings import game_settings
+
+def draw_background_with_tiled_map(game_screen, game_map):
+    # draw map data on screen
+    for layer in game_map.visible_layers:
+        for x, y, gid, in layer:
+            tile = game_map.get_tile_image_by_gid(gid)
+            if not tile:
+                continue
+
+            game_screen.blit(
+                tile,
+                (x * game_map.tilewidth,
+                 y * game_map.tileheight)
+            )
+
+
+def load_alpha_image(resource_img):
+    path = os.path.join(
+        game_settings.BASE_DIR,
+        'img/{}'.format(resource_img),
+    )
+
+    return pygame.image.load(path)
+
+def random_create(world):
+    from game.entities import Hero
+    green_hero_img = load_alpha_image('green_hero.png')
+    graves_img = load_alpha_image('graves.png')
+
+    for _ in range(0, 11):
+        randX, randY = randint(0, game_settings.SCREEN_WIDTH), randint(0, game_settings.SCREEN_HEIGHT)
+        hero = Hero(world, green_hero_img, graves_img, 'green')
+        hero.location = Vector2(randX, randY)
+        hero.name = 'green-hero'
+        world.add_entity(hero)
+  
+```
+
+:::
